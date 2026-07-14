@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Diagnóstico de Fallas - Servidor</title>
+  <style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .header .icono { font-size: 42px; margin-bottom: 10px; }
+  .header h1 { font-size: 22px; color: #1a202c; font-weight: 700; margin-bottom: 6px; }
+  .header p { color: #718096; font-size: 14px; }
+
+  .seccion-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .opciones-rapidas {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .opcion-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s;
+    width: 100%;
+  }
+
+  .opcion-btn:hover { border-color: #4299e1; background: #ebf8ff; }
+  .opcion-btn.activo { border-color: #3182ce; background: #ebf8ff; }
+  .opcion-btn .emoji { font-size: 20px; flex-shrink: 0; }
+  .opcion-btn .texto { font-size: 14px; font-weight: 600; color: #2d3748; }
+  .opcion-btn .subtexto { font-size: 12px; color: #718096; margin-top: 1px; }
+
+  .divisor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .divisor hr { flex: 1; border: none; border-top: 1px solid #e2e8f0; }
+  .divisor span { font-size: 12px; color: #a0aec0; white-space: nowrap; }
+
+  .texto-libre-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .texto-libre {
+    width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #2d3748;
+    resize: none;
+    transition: border-color 0.18s;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .texto-libre:focus { border-color: #4299e1; }
+  .texto-libre::placeholder { color: #cbd5e0; }
+
+  .btn-diagnosticar {
+    width: 100%;
+    margin-top: 20px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .btn-diagnosticar:hover { background: #2b6cb0; }
+
+  .error-msg {
+    color: #e53e3e;
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* RESULTADO */
+  .resultado { display: none; }
+  .resultado.visible { display: block; }
+
+  .resultado-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .resultado-badge.encontrado { background: #c6f6d5; color: #276749; }
+  .resultado-badge.no-encontrado { background: #fed7d7; color: #9b2c2c; }
+
+  .resultado-titulo {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 12px;
+  }
+
+  .resultado-solucion {
+    background: #f7fafc;
+    border-left: 4px solid #3182ce;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .btn-volver {
+    background: none;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.18s;
+    width: 100%;
+  }
+
+  .btn-volver:hover { border-color: #a0aec0; background: #f7fafc; }
+</style>
+</head>
+<body>
+
+  <div class="card">
+
+    <!-- FORMULARIO -->
+    <div id="formulario">
+
+      <div class="header">
+        <div class="icono">🔧</div>
+        <h1>Diagnóstico de Fallas</h1>
+        <p>Selecciona un error común o describe tu problema para obtener una solución.</p>
+      </div>
+
+      <p class="seccion-label">Errores más comunes</p>
+
+      <div class="opciones-rapidas">
+        <button class="opcion-btn" onclick="seleccionarOpcion(this, 'Servidor no responde')">
+          <span class="emoji">🖥️</span>
+          <div>
+            <div class="texto">Servidor no responde</div>
+            <div class="subtexto">Sin conexión, no hace ping</div>
+          </div>
+        </button>
+        <button class="opcion-btn" onclick="seleccionarOpcion(this, 'Error 500')">
+          <span class="emoji">⚠️</span>
+          <div>
+            <div class="texto">Error 500</div>
+            <div class="subtexto">Error interno del servidor</div>
+          </div>
+        </button>
+        <button class="opcion-btn" onclick="seleccionarOpcion(this, 'Página no carga')">
+          <span class="emoji">🌐</span>
+          <div>
+            <div class="texto">Página no carga</div>
+            <div class="subtexto">Timeout, lento o pantalla en blanco</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="divisor">
+        <hr/><span>o describe tu error</span><hr/>
+      </div>
+
+      <label class="texto-libre-label" for="texto">
+        Escribe el error o problema que estás experimentando
+      </label>
+      <textarea
+        id="texto"
+        class="texto-libre"
+        rows="3"
+        placeholder="Ej: me sale error 404, no puedo conectar a la base de datos..."
+        oninput="limpiarSeleccion()"
+      ></textarea>
+
+      <div class="error-msg" id="error-msg">
+        Por favor selecciona una opción o escribe tu error antes de continuar.
+      </div>
+
+      <button class="btn-diagnosticar" onclick="diagnosticar()">
+        🔍 Obtener diagnóstico
+      </button>
+
+    </div>
+
+    <!-- RESULTADO (oculto al inicio) -->
+    <div class="resultado" id="resultado">
+
+      <div class="header">
+        <div class="icono">📋</div>
+        <h1>Resultado del diagnóstico</h1>
+      </div>
+
+      <span class="resultado-badge" id="resultado-badge"></span>
+      <div class="resultado-titulo" id="resultado-titulo"></div>
+      <div class="resultado-solucion" id="resultado-solucion"></div>
+
+      <button class="btn-volver" onclick="volver()">
+        ← Hacer otro diagnóstico
+      </button>
+
+    </div>
+
+  </div>
+  <script>
+  // Variable que guarda qué botón eligió el usuario
+  let opcionSeleccionada = null;
+
+  // Base de datos de diagnósticos con palabras clave
+  const diagnosticos = [
+    {
+      opcionDirecta: "Servidor no responde",
+      palabras: ["no responde al ping", "sin conexion", "no conecta", "apagado", "no enciende"],
+      diagnostico: "Servidor apagado o sin conexión",
+      solucion: "El servidor no responde al ping ni está encendido. Enciéndelo y verifica la conexión física de red."
+    },
+    {
+      opcionDirecta: "Error 500",
+      palabras: ["500", "error interno", "internal server error"],
+      diagnostico: "Error interno del servidor (500)",
+      solucion: "El servidor y el servicio web funcionan, pero la aplicación está fallando internamente. Revisa los logs del backend para identificar el error exacto."
+    },
+    {
+      opcionDirecta: "Página no carga",
+      palabras: ["no carga", "timeout", "tarda mucho", "lento", "pantalla en blanco"],
+      diagnostico: "Tiempo de espera agotado o pantalla en blanco",
+      solucion: "El servidor está tardando demasiado en responder o hay un error en el código. Revisa la carga del servidor y los logs de errores."
+    },
+    {
+      palabras: ["firewall", "bloqueado", "encendido pero no responde"],
+      diagnostico: "Problema de red o firewall",
+      solucion: "El servidor está encendido pero no responde. Revisa las reglas del firewall y la configuración de red."
+    },
+    {
+      palabras: ["servicio caido", "apache caido", "nginx caido"],
+      diagnostico: "Servicio web caído",
+      solucion: "El servidor responde a la red, pero el servicio web no está activo. Reinicia el servicio (nginx/apache) y revisa que esté escuchando en el puerto correcto."
+    },
+    {
+      palabras: ["dns", "no resuelve el dominio", "configuracion del dominio"],
+      diagnostico: "Error de configuración o DNS",
+      solucion: "Hay un problema de configuración o DNS. Revisa el archivo de hosts, los registros DNS y la configuración del dominio."
+    },
+    {
+      palabras: ["404", "no encontrada", "no encontrado", "pagina no existe"],
+      diagnostico: "Página no encontrada (404)",
+      solucion: "La URL solicitada no existe en el servidor. Verifica que la ruta esté escrita correctamente y que el archivo no haya sido movido o eliminado."
+    },
+    {
+      palabras: ["ssl", "certificado", "no seguro", "conexion no privada"],
+      diagnostico: "Error de certificado SSL",
+      solucion: "El certificado de seguridad del sitio está vencido o mal configurado. Verifica su fecha de expiración e instalación."
+    },
+    {
+      palabras: ["base de datos", "mysql", "sql", "conexion a la base"],
+      diagnostico: "Error de base de datos",
+      solucion: "Hay un problema de conexión o consulta con la base de datos. Revisa las credenciales de conexión y el estado del servicio."
+    }
+  ];
+
+  // Se ejecuta cuando el usuario clickea uno de los 3 botones
+  function seleccionarOpcion(btn, opcion) {
+    // Quita el estilo "activo" de todos los botones
+    document.querySelectorAll('.opcion-btn').forEach(b => b.classList.remove('activo'));
+    // Pone el estilo "activo" solo en el botón clickeado
+    btn.classList.add('activo');
+    // Guarda la opción elegida
+    opcionSeleccionada = opcion;
+    // Limpia el campo de texto (no puede haber los dos a la vez)
+    document.getElementById('texto').value = '';
+    ocultarError();
+  }
+
+  // Se ejecuta cuando el usuario escribe en el campo de texto
+  function limpiarSeleccion() {
+    document.querySelectorAll('.opcion-btn').forEach(b => b.classList.remove('activo'));
+    opcionSeleccionada = null;
+    ocultarError();
+  }
+
+  function ocultarError() {
+    document.getElementById('error-msg').style.display = 'none';
+  }
+
+  // Se ejecuta cuando el usuario hace clic en "Obtener diagnóstico"
+  function diagnosticar() {
+    const texto = document.getElementById('texto').value.trim().toLowerCase();
+
+    // Validación: si no eligió nada ni escribió nada, muestra el error
+    if (!opcionSeleccionada && !texto) {
+      document.getElementById('error-msg').style.display = 'block';
+      return;
+    }
+
+    let encontrado = null;
+
+    // Paso 1: buscar por opción directa (botón clickeado)
+    if (opcionSeleccionada) {
+      encontrado = diagnosticos.find(d => d.opcionDirecta === opcionSeleccionada);
+    }
+
+    // Paso 2: si no encontró por botón, buscar por palabras clave en el texto
+    if (!encontrado && texto) {
+      encontrado = diagnosticos.find(d =>
+        d.palabras.some(p => texto.includes(p))
+      );
+    }
+
+    // Mostrar el resultado según si encontró o no
+    const badge = document.getElementById('resultado-badge');
+    const titulo = document.getElementById('resultado-titulo');
+    const solucion = document.getElementById('resultado-solucion');
+
+    if (encontrado) {
+      badge.textContent = '✅ Diagnóstico encontrado';
+      badge.className = 'resultado-badge encontrado';
+      titulo.textContent = encontrado.diagnostico;
+      solucion.textContent = encontrado.solucion;
+    } else {
+      badge.textContent = '❌ No identificado';
+      badge.className = 'resultado-badge no-encontrado';
+      titulo.textContent = 'Error no identificado automáticamente';
+      solucion.textContent = 'No pudimos identificar tu error con las palabras clave registradas. Intenta describir el problema con más detalle o contacta a un técnico.';
+    }
+
+    // Oculta el formulario y muestra el resultado
+    document.getElementById('formulario').style.display = 'none';
+    document.getElementById('resultado').classList.add('visible');
+  }
+
+  // Se ejecuta cuando el usuario hace clic en "Hacer otro diagnóstico"
+  function volver() {
+    document.querySelectorAll('.opcion-btn').forEach(b => b.classList.remove('activo'));
+    opcionSeleccionada = null;
+    document.getElementById('texto').value = '';
+    ocultarError();
+    document.getElementById('formulario').style.display = 'block';
+    document.getElementById('resultado').classList.remove('visible');
+  }
+</script>
+</body>
+</html>
