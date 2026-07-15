@@ -1,0 +1,21 @@
+{
+  "name": "diagnostico-fallas-server",
+  "version": "1.0.0",
+  "description": "Servidor para el sistema de diagnóstico de fallas con contacto por correo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "diagnostico",
+    "fallas",
+    "soporte",
+    "servidor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.7"
+  }
+}
