@@ -14,19 +14,21 @@
 <body>
   <!-- Barra de navegación superior -->
   <nav class="navbar-top">
-    <div class="navbar-content">
-      <a href="#" class="navbar-brand">
-        <span class="icon">🔧</span>
-        <span>TechSupport</span>
-      </a>
-      <div class="navbar-links">
-        <a href="#faq">Preguntas Frecuentes</a>
-        <a href="#status">Estado del Sistema</a>
-        <a href="#" onclick="abrirModalContacto(event)">Contactar</a>
-      </div>
-    </div>
-  </nav>
+  <div class="navbar-content">
+    <a href="#" class="navbar-brand">
+      <span class="icon">🔧</span>
+      <span>TechSupport</span>
+    </a>
 
+    <button class="navbar-toggler" type="button" onclick="toggleMenu()">☰</button>
+
+    <div class="navbar-links" id="navbarMenu">
+      <a href="#faq">Preguntas Frecuentes</a>
+      <a href="#status">Estado del Sistema</a>
+      <a href="#" onclick="abrirModalContacto(event)">Contactar</a>
+    </div>
+  </div>
+</nav>
   <!-- Contenido principal -->
   <div class="container-custom">
     <div class="layout-grid">

@@ -1002,3 +1002,65 @@ body {
     padding: 10px;
   }
 }
+/* ===== NAVBAR RESPONSIVA ===== */
+
+/* Botón hamburguesa - oculto en escritorio */
+.navbar-toggler {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-dark);
+  margin-left: auto;
+  line-height: 1;
+}
+
+.navbar-toggler:hover {
+  background: var(--lighter-bg);
+}
+
+/* En móvil */
+@media (max-width: 768px) {
+
+  /* Navbar se envuelve en 2 filas */
+  .navbar-content {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* Mostrar botón hamburguesa */
+  .navbar-toggler {
+    display: block;
+  }
+
+  /* Links ocultos por defecto en móvil */
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    padding: 8px 0;
+    gap: 2px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 8px;
+  }
+
+  /* Links visibles cuando el menú está abierto */
+  .navbar-links.open {
+    display: flex;
+  }
+
+  /* Estilo de cada link en móvil */
+  .navbar-links a {
+    padding: 10px 16px;
+    border-radius: 6px;
+    width: 100%;
+    display: block;
+  }
+
+  .navbar-links a:hover {
+    background: var(--lighter-bg);
+  }
+}

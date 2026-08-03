@@ -320,3 +320,16 @@ function mostrarMensaje(element, texto, tipo) {
   element.className = 'form-message ' + tipo;
   element.style.display = 'block';
 }
+/* ===== MENÚ HAMBURGUESA ===== */
+function toggleMenu() {
+  const menu = document.getElementById('navbarMenu');
+  menu.classList.toggle('open');
+}
+
+/* Cerrar menú al hacer clic en un link */
+document.querySelectorAll('.navbar-links a').forEach(link => {
+  link.addEventListener('click', () => {
+    const menu = document.getElementById('navbarMenu');
+    menu.classList.remove('open');
+  });
+});
