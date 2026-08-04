@@ -1,8 +1,6 @@
-// Variable que guarda qué botón eligió el usuario
 let opcionSeleccionada = null;
 let categoriaActual = 'todos';
 
-// Base de datos de diagnósticos con palabras clave y categoría
 const diagnosticos = [
   {
     categoria: 'servidor',
@@ -73,110 +71,51 @@ const diagnosticos = [
   }
 ];
 
-/**
- * Filtra opciones por categoría
- * @param {string} categoria - La categoría a filtrar
- */
 function filtrarCategoria(categoria, evt) {
   categoriaActual = categoria;
-
-  // Actualizar botones de tabs
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  if (evt && evt.target) {
-    evt.target.classList.add('active');
-  } else {
-    // fallback: marcar el tab correspondiente
-    const tab = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.trim().toLowerCase() === categoria);
-    if (tab) tab.classList.add('active');
-  }
-
-  // Actualizar sidebar
+  if (evt && evt.target) evt.target.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
   if (evt && evt.target && evt.target.classList.contains('sidebar-item')) {
     evt.target.classList.add('active');
-  } else {
-    const sidebarItem = Array.from(document.querySelectorAll('.sidebar-item')).find(el => el.textContent.includes(categoria));
-    if (sidebarItem) sidebarItem.classList.add('active');
   }
-
   renderizarOpciones();
 }
 
-
-/**
- * Busca problemas en la lista
- */
-function buscarProblema() {
-  renderizarOpciones();
-}
-
-/**
- * Renderiza las opciones según la categoría y búsqueda
- */
 function renderizarOpciones() {
-  const busqueda = document.getElementById('busqueda').value.toLowerCase();
   const container = document.getElementById('opcionesContainer');
-  
-  // Filtrar diagnósticos
-  let opcionesFiltradas = diagnosticos.filter(d => {
-    const cumpleCategoria = categoriaActual === 'todos' || d.categoria === categoriaActual;
-    const cumpleBusqueda = !busqueda || 
-      (d.diagnostico && d.diagnostico.toLowerCase().includes(busqueda)) ||
-      (d.palabras && d.palabras.some(p => p.toLowerCase().includes(busqueda)));
-    return cumpleCategoria && cumpleBusqueda;
-  });
-
-  // Renderizar botones
+  let opcionesFiltradas = diagnosticos.filter(d =>
+    categoriaActual === 'todos' || d.categoria === categoriaActual
+  );
   container.innerHTML = opcionesFiltradas.map(d => `
     <button class="option-btn" onclick="seleccionarOpcion(this, '${d.opcionDirecta || d.diagnostico}')">
-      <span class="emoji">${d.opcionDirecta === "Servidor no responde" ? '🖥️' : 
-                           d.opcionDirecta === "Error 500" ? '⚠️' : 
-                           d.opcionDirecta === "Página no carga" ? '🌐' : 
-                           d.opcionDirecta === "Error de conexión" ? '🔗' : '⚙️'}</span>
+      <span class="emoji">${
+        d.opcionDirecta === "Servidor no responde" ? '🖥️' :
+        d.opcionDirecta === "Error 500" ? '⚠️' :
+        d.opcionDirecta === "Página no carga" ? '🌐' :
+        d.opcionDirecta === "Error de conexión" ? '🔗' : '⚙️'
+      }</span>
       <div class="text-content">
         <div class="text">${d.opcionDirecta || d.diagnostico}</div>
-        <div class="subtext">${d.palabras ? d.palabras.slice(0, 2).join(', ') : 'Diagnóstico personalizado'}</div>
+        <div class="subtext">${d.palabras ? d.palabras.slice(0, 2).join(', ') : ''}</div>
       </div>
     </button>
   `).join('');
 }
 
-/**
- * Se ejecuta cuando el usuario clickea uno de los botones de opciones rápidas
- * @param {HTMLElement} btn - El botón que fue clickeado
- * @param {string} opcion - La opción seleccionada
- */
 function seleccionarOpcion(btn, opcion) {
   document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   opcionSeleccionada = opcion;
-  document.getElementById('texto').value = '';
   ocultarError();
 }
 
-/**
- * Se ejecuta cuando el usuario escribe en el campo de texto
- */
-function limpiarSeleccion() {
-  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
-  opcionSeleccionada = null;
-  ocultarError();
-}
-
-/**
- * Oculta el mensaje de error
- */
 function ocultarError() {
   document.getElementById('error-msg').style.display = 'none';
 }
 
-/**
- * Se ejecuta cuando el usuario hace clic en "Obtener diagnóstico"
- */
 function diagnosticar() {
-  const texto = document.getElementById('texto').value.trim().toLowerCase();
-
-  if (!opcionSeleccionada && !texto) {
+  if (!opcionSeleccionada) {
     document.getElementById('error-msg').style.display = 'block';
     const errorMsg = document.getElementById('error-msg');
     errorMsg.classList.remove('shake');
@@ -185,19 +124,9 @@ function diagnosticar() {
     return;
   }
 
-  let encontrado = null;
-
-  if (opcionSeleccionada) {
-    encontrado = diagnosticos.find(d => 
-      d.opcionDirecta === opcionSeleccionada || d.diagnostico === opcionSeleccionada
-    );
-  }
-
-  if (!encontrado && texto) {
-    encontrado = diagnosticos.find(d =>
-      d.palabras.some(p => texto.includes(p))
-    );
-  }
+  const encontrado = diagnosticos.find(d =>
+    d.opcionDirecta === opcionSeleccionada || d.diagnostico === opcionSeleccionada
+  );
 
   const badge = document.getElementById('resultado-badge');
   const titulo = document.getElementById('resultado-titulo');
@@ -210,7 +139,6 @@ function diagnosticar() {
       'medium': '🟡 Medio',
       'low': '🟢 Bajo'
     };
-    
     badge.textContent = '✅ ' + (severidadTexto[encontrado.severidad] || 'Diagnóstico encontrado');
     badge.className = 'severity-badge found ' + encontrado.severidad;
     titulo.textContent = encontrado.diagnostico;
@@ -219,117 +147,129 @@ function diagnosticar() {
     badge.textContent = '❌ No identificado';
     badge.className = 'severity-badge not-found';
     titulo.textContent = 'Error no identificado automáticamente';
-    solucion.textContent = 'No pudimos identificar tu error con las palabras clave registradas. Intenta describir el problema con más detalle o contacta a un técnico.';
+    solucion.textContent = 'No pudimos identificar tu error. Usa el chat 💬 para describir tu problema con más detalle.';
   }
 
   document.getElementById('formulario').style.display = 'none';
   document.getElementById('resultado').classList.add('visible');
-  
-  // Scroll al resultado
   document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
 }
 
-/**
- * Se ejecuta cuando el usuario hace clic en "Hacer otro diagnóstico"
- */
 function volver() {
   document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
   opcionSeleccionada = null;
-  document.getElementById('texto').value = '';
-  document.getElementById('busqueda').value = '';
   ocultarError();
   document.getElementById('formulario').style.display = 'block';
   document.getElementById('resultado').classList.remove('visible');
-  
-  // Scroll al formulario
   document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
-  
   renderizarOpciones();
 }
 
-// Inicializar
-document.addEventListener('DOMContentLoaded', function() {
-  renderizarOpciones();
-  
-  const textarea = document.getElementById('texto');
-  if (textarea) {
-    textarea.addEventListener('keypress', function(event) {
-      if (event.key === 'Enter' && event.ctrlKey) {
-        diagnosticar();
-      }
-    });
-  }
-  
-  // Inicializar EmailJS
-  inicializarEmailJS();
-  
-  // Cerrar modal al hacer clic fuera
-  window.addEventListener('click', function(event) {
-    const modal = document.getElementById('contactModal');
-    if (event.target === modal) {
-      cerrarModalContacto();
-    }
-  });
-});
-
-/**
- * Inicializa EmailJS con la configuración necesaria
- */
-function inicializarEmailJS() {
-  // Este servidor no requiere inicialización
-  console.log('✅ Sistema de contacto inicializado');
-}
-
-/**
- * Abre el modal de contacto
- * @param {Event} event - El evento del click
- */
 function abrirModalContacto(event) {
   event.preventDefault();
-  const modal = document.getElementById('contactModal');
-  modal.classList.add('show');
+  document.getElementById('contactModal').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
-/**
- * Cierra el modal de contacto
- */
 function cerrarModalContacto() {
-  const modal = document.getElementById('contactModal');
-  modal.classList.remove('show');
+  document.getElementById('contactModal').classList.remove('show');
   document.body.style.overflow = 'auto';
   document.getElementById('contactForm').reset();
-  document.getElementById('formMessage').style.display = 'none';
 }
 
-/**
- * Envía el correo de contacto
- * @param {Event} event - El evento del formulario
- */
-// FormSubmit maneja todo automáticamente: validación, envío, confirmación
-// No se requiere código JavaScript adicional para el envío
-
-/**
- * Muestra un mensaje en el formulario
- * @param {HTMLElement} element - Elemento donde mostrar el mensaje
- * @param {string} texto - Texto del mensaje
- * @param {string} tipo - Tipo de mensaje (success, error, loading)
- */
-function mostrarMensaje(element, texto, tipo) {
-  element.textContent = texto;
-  element.className = 'form-message ' + tipo;
-  element.style.display = 'block';
-}
-/* ===== MENÚ HAMBURGUESA ===== */
 function toggleMenu() {
-  const menu = document.getElementById('navbarMenu');
-  menu.classList.toggle('open');
+  document.getElementById('navbarMenu').classList.toggle('open');
 }
 
-/* Cerrar menú al hacer clic en un link */
-document.querySelectorAll('.navbar-links a').forEach(link => {
-  link.addEventListener('click', () => {
-    const menu = document.getElementById('navbarMenu');
-    menu.classList.remove('open');
+document.addEventListener('DOMContentLoaded', function() {
+  renderizarOpciones();
+  window.addEventListener('click', function(event) {
+    const modal = document.getElementById('contactModal');
+    if (event.target === modal) cerrarModalContacto();
   });
+});
+
+/* ===== CHAT WIDGET ===== */
+function toggleChat() {
+  const widget = document.getElementById('chatWidget');
+  const icon = document.getElementById('chatBtnIcon');
+  widget.classList.toggle('open');
+  icon.textContent = widget.classList.contains('open') ? '✕' : '💬';
+  if (widget.classList.contains('open')) {
+    document.getElementById('chatInput').focus();
+  }
+}
+
+function agregarMensaje(texto, tipo, claseExtra = '') {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${tipo}`;
+  div.innerHTML = `<div class="chat-bubble ${claseExtra}">${texto}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function mostrarTyping() {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg bot';
+  div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="chat-bubble">
+      <div class="chat-typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function quitarTyping() {
+  const typing = document.getElementById('typingIndicator');
+  if (typing) typing.remove();
+}
+
+function enviarChat() {
+  const input = document.getElementById('chatInput');
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  agregarMensaje(texto, 'user');
+  input.value = '';
+  mostrarTyping();
+
+  setTimeout(() => {
+    quitarTyping();
+    const textoLower = texto.toLowerCase();
+    const encontrado = diagnosticos.find(d =>
+      (d.opcionDirecta && d.opcionDirecta.toLowerCase().includes(textoLower)) ||
+      (d.diagnostico && d.diagnostico.toLowerCase().includes(textoLower)) ||
+      (d.palabras && d.palabras.some(p => textoLower.includes(p)))
+    );
+
+    if (encontrado) {
+      const severidadEmoji = {
+        'critical': '🔴', 'high': '🟠', 'medium': '🟡', 'low': '🟢'
+      };
+      const emoji = severidadEmoji[encontrado.severidad] || '✅';
+      agregarMensaje(`
+        <div class="diag-title">${emoji} ${encontrado.diagnostico}</div>
+        <div class="diag-solucion">${encontrado.solucion}</div>
+      `, 'bot', 'success');
+    } else {
+      agregarMensaje(
+        '❌ No pude identificar tu problema. Intenta describir el error con más detalle o usa el formulario principal para seleccionar una categoría.',
+        'bot', 'error'
+      );
+    }
+  }, 800);
+}
+
+document.addEventListener('click', function(e) {
+  const widget = document.getElementById('chatWidget');
+  const btn = document.querySelector('.chat-btn');
+  if (widget && btn && !widget.contains(e.target) && !btn.contains(e.target)) {
+    widget.classList.remove('open');
+    document.getElementById('chatBtnIcon').textContent = '💬';
+  }
 });
